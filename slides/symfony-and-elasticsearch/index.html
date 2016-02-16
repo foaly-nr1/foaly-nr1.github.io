@@ -543,6 +543,33 @@ curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search' -d '{
 					</aside>
 				</section>
 				<section>
+					<pre class="small-code"><code class="json" data-trim>
+{
+  "took" : 14,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 0.11506981,
+    "hits" : [ {
+      "_index" : "app",
+      "_type" : "blog_post",
+      "_id" : "4",
+      "_score" : 0.11506981,
+      "_source" : {
+        "caption" : "Symfony Meetup",
+        "content" : "The February meetup of #Symfonyuk takes places on Feb 16."
+      }
+    } ]
+  }
+}
+					</code></pre>
+				</section>
+				<section>
 					<p>How about <strong>filters and scoring</strong> you ask?</p>
 				</section>
 				<section>
@@ -610,8 +637,30 @@ return new JsonResponse($results);
 					</code></pre>
 				</section>
 				<section>
-					<pre class="small-code"><code class="bash" data-trim>
-$ curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search?pretty' -d '{"query":{"bool":{"should":[{"match":{"caption":{"query":"Symfony"}}}],"must":[{"terms":{"category":["tech","sports"]}}]}}}'
+					<pre class="small-code"><code class="json" data-trim>
+{
+  "query": {
+    "bool": {
+      "should": [{
+        "match": {
+          "caption": {
+            "query": "Symfony"
+          }
+        }
+      }],
+      "must": [{
+        "terms": {
+          "category": [ "tech", "sports" ]
+        }
+      }]
+    }
+  }
+}
+					</code></pre>
+				</section>
+				<section>
+					<pre class="small-code"><code class="json" data-trim>
+
 {
   "took" : 44,
   "timed_out" : false,
