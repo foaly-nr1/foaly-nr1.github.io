@@ -55,16 +55,14 @@
 					<ul>
 						<li class="fragment">Dependencies</li>
 						<li class="fragment">Set up a dev environment in 15 mins</li>
-						<li class="fragment">Debug tools</li>
+						<li class="fragment">Debugging tools</li>
 						<li class="fragment">Simple queries</li>
 						<li class="fragment">Geo bounding box query</li>
-						<li class="fragment">Search alerts</li>
 					</ul>
 					<aside class="notes">
 						<ul>
 							<li>Dependencies: Where they're at in terms of their development</li>
 							<li>Simple queries: Search all, filters, boost</li>
-							<li>Search alerts: Spam / NSFW</li>
 						</ul>
 					</aside>
 				</section>
@@ -210,7 +208,7 @@
 					</table>
 				</section>
 				<section>
-					<p>Elasticsearch 2.x: Lots of improvements</p>
+					<p>Elasticsearch 2.x = Lots of improvements</p>
 				</section>
 				<section>
 					<img src="images/foselasticabundle-bc.png" alt="FOSElasticaBundle BC" class="plain">
@@ -247,12 +245,12 @@ $ composer update
 				<section>
 					<h2>This Talk</h2>
 					<ul>
-						<li class="fragment done">Dependencies</li>
-						<li class="fragment">Set up a dev environment in 15 mins</li>
+						<li class="done">Dependencies</li>
+						<li>Set up a dev environment in 15 mins</li>
 					</ul>
 				</section>
 				<section>
-					<h1>Let's get started</h1>
+					<p>Let's get started</p>
 				</section>
 				<section>
 					<h2>Vagrant/Docker: Elasticsearch 2.1</h2>
@@ -461,7 +459,15 @@ $ curl 192.168.33.111:9200/app?pretty
 					<p>Add some records...</p>
 				</section>
 				<section>
-					<p>And we're ready for our first search</p>
+					<p>...and we're good to search</p>
+				</section>
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li class="done">Dependencies</li>
+						<li class="done">Set up a dev environment in 15 mins</li>
+						<li>Debugging tools</li>
+					</ul>
 				</section>
 				<section>
 					<pre class="small-code"><code class="php" data-trim>
@@ -478,15 +484,15 @@ return new JsonResponse($results);
 				</section>
 				<section>
 					<img src="images/profiler-headers.png" class="plain">
-					<aside class="notes">
-						<ul>
-							<li>Configure Monolog to display browser console messages</li>
-							<li>Channel elastica</li>
-						</ul>
-					</aside>
 				</section>
 				<section>
 					<img src="images/profiler-01.png" height="500" class="plain">
+					<aside class="notes">
+						<ul>
+							<li>New look in 2.8</li>
+							<li>Or just hit "Last 10"</li>
+						</ul>
+					</aside>
 				</section>
 				<section>
 					<h2>Chrome Logger</h2>
@@ -499,6 +505,12 @@ monolog:
             level: info
             channels: [elastica]
             		</code></pre>
+            		<aside class="notes">
+						<ul>
+							<li>Configure Monolog to display browser console messages</li>
+							<li>Channel elastica</li>
+						</ul>
+					</aside>
             	</section>
             	<section>
             		<img src="images/chrome-logger.png" class="plain">
@@ -517,12 +529,47 @@ curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search' -d '
 					</code></pre>
 					<aside class="notes">
 						<ul>
-							<li>Elasticsearch provides a full Query DSL based on JSON to define queries</li>
 							<li>Tests on CLI</li>
+							<li>Add ?pretty query string</li>
+							<li>Elasticsearch provides a full Query DSL based on JSON to define queries</li>
+							<li>Looks bulky -> loads of shorthand codes</li>
 						</ul>
 					</aside>
 				</section>
-
+				<section>
+					<p>How about <strong>filters and boosting</strong> you ask?</p>
+				</section>
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li class="done">Dependencies</li>
+						<li class="done">Set up a dev environment in 15 mins</li>
+						<li class="done">Debugging tools</li>
+						<li>Simple queries</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Elastica</h2>
+					<img src="images/folder-structure-01.png" class="plain">
+					<aside class="notes">
+						<ul>
+							<li>Instead of documentation, look at the Query folder</li>
+							<li>You had queries that could match and score</li>
+							<li>And filters that could only match and were cacheable</li>
+							<li>Deprecated the filtered query in favour of a new filter clause on the bool query</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<img src="images/folder-structure-02.png" class="plain">
+					<aside class="notes">
+						<ul>
+							<li>You had queries that could match and score</li>
+							<li>And filters that could only match and were cacheable</li>
+							<li>Deprecated the filtered query in favour of a new filter clause on the bool query</li>
+						</ul>
+					</aside>
+				</section>
 				<section>
 					<h2>Deprecated in Elastica 3.x</h2>
 					<ul>
@@ -537,11 +584,114 @@ curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search' -d '
 						</ul>
 					</aside>
 				</section>
+				<section>
+					<pre class="small-code"><code class="php" data-trim>
+$finder = $this->container->get('fos_elastica.finder.app.blog_post');
 
+$boolQuery = new \Elastica\Query\BoolQuery();
+
+$fieldQuery = new \Elastica\Query\Match();
+$fieldQuery->setFieldQuery('caption', 'Symfony');
+$boolQuery->addShould($fieldQuery); // --> Previously matching/scoring
+
+$tagsQuery = new \Elastica\Query\Terms();
+$tagsQuery->setTerms('category', array('tech', 'sports'));
+$boolQuery->addMust($tagsQuery); // --> Previously filter
+
+$results = $finder->find($boolQuery);
+
+return new JsonResponse($results);
+					</code></pre>
+				</section>
+				<section>
+					<pre class="small-code"><code class="bash" data-trim>
+$ curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search?pretty' -d '{"query":{"bool":{"should":[{"match":{"caption":{"query":"Symfony"}}}],"must":[{"terms":{"category":["tech","sports"]}}]}}}'
+{
+  "took" : 44,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 0.020333186,
+    "hits" : [ {
+      "_index" : "app",
+      "_type" : "blog_post",
+      "_id" : "4",
+      "_score" : 0.020333186,
+      "_source" : {
+        "caption" : "Symfony Meetup",
+        "content" : "The February meetup of #Symfonyuk takes places on Feb 16."
+      }
+    } ]
+  }
+}
+					</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>FOSElasticaBundle just returns an array or ArrayCollection of Doctrine entities</li>
+							<li>JSON response contains score, too</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>Controlling Relevance</h2>
+					<pre><code class="yaml" data-trim>
+fos_elastica:
+    indexes:
+        app:
+            types:
+                blog_post:
+                    mappings:
+                        caption:
+                            boost: 1.5
+                        content: ~
+                    </code></pre>
+                </section>
+                <section>
+					<h2>This Talk</h2>
+					<ul>
+						<li class="done">Dependencies</li>
+						<li class="done">Set up a dev environment in 15 mins</li>
+						<li class="done">Debugging tools</li>
+						<li class="done">Simple queries</li>
+						<li>Geo bounding box query</li>
+					</ul>
+				</section>
+				<section>
+					<h2>Geo Functions</h2>
+					<ul>
+						<li class="fragment">Higher relevance when closer to a point (e.g. location of user)</li>
+						<li class="fragment">Filter results within a radius from a point</li>
+						<li class="fragment">Filter results within a bounding box</li>
+					</ul>
+					<aside class="notes">
+						<ul>
+							<li>Search for other users in an app</li>
+							<li>Search restaurants within 5 mi</li>
+							<li>Hotels etc</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<img src="images/airbnb.gif" class="plain">
+				</section>
 				<section>
 					<ul>
+						<li><a href="https://www.elastic.co/guide" target="_blank">elastic.co/guide</a> ("Reference" - "Query DSL")</li>
+						<li><a href="http://elastica.io" target="_blank">elastica.io</a></li>
+						<li><a href="https://github.com/FriendsOfSymfony/FOSElasticaBundle" target="_blank">FOSElasticaBundle on Github</a></li>
 						<li><a href="https://qbox.io/blog/author/sloan-ahrens" target="_blank">Sloan Ahrens</a></li>
+						<li>Tech Blogs of technology companies using Elasticsearch</li>
 					</ul>
+					<aside class="notes">
+						<ul>
+							<li>Definitive Guide not up-to-date</li>
+						</ul>
+					</aside>
 				</section>
 				<section>
 					<h1>@jschmid_no1</h1>
