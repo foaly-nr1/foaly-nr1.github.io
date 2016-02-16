@@ -470,14 +470,6 @@ $ curl 192.168.33.111:9200/app?pretty
 					<p>...and we're good to search</p>
 				</section>
 				<section>
-					<h2>This Talk</h2>
-					<ul>
-						<li class="done">Dependencies</li>
-						<li class="done">Set up a dev environment in 15 mins</li>
-						<li>Debugging tools</li>
-					</ul>
-				</section>
-				<section>
 					<pre class="small-code"><code class="php" data-trim>
 $finder = $this->container->get('fos_elastica.finder.app.blog_post');
 $results = $finder->find('Symfony');
@@ -489,6 +481,14 @@ return new JsonResponse($results);
 							<li>Will serialize our public properties</li>
 						</ul>
 					</aside>
+				</section>
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li class="done">Dependencies</li>
+						<li class="done">Set up a dev environment in 15 mins</li>
+						<li>Debugging tools</li>
+					</ul>
 				</section>
 				<section>
 					<img src="images/profiler-headers.png" class="plain">
@@ -525,15 +525,13 @@ monolog:
             	</section>
 				<section>
 					<pre><code class="bash" data-trim>
-curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search' -d '
-	{
-		"query": {
-			"query_string": {
-				"query": "Symfony"
-			}
+curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search' -d '{
+	"query": {
+		"query_string": {
+			"query": "Symfony"
 		}
 	}
-'
+}'
 					</code></pre>
 					<aside class="notes">
 						<ul>
@@ -545,7 +543,7 @@ curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search' -d '
 					</aside>
 				</section>
 				<section>
-					<p>How about <strong>filters and boosting</strong> you ask?</p>
+					<p>How about <strong>filters and scoring</strong> you ask?</p>
 				</section>
 				<section>
 					<h2>This Talk</h2>
@@ -683,6 +681,172 @@ fos_elastica:
 							<li>Hotels etc</li>
 						</ul>
 					</aside>
+				</section>
+				<section>
+					<img src="images/airbnb.gif" class="plain">
+				</section>
+				<section>
+					<pre class="small-code"><code class="php" data-trim>
+
+/**
+ * @ORM\Embeddable
+ */
+class GeoPoint
+{
+  /**
+   * @ORM\Column(type=&quot;float&quot;, nullable=true)
+   */
+  public $longitude;
+
+  /**
+   * @ORM\Column(type=&quot;float&quot;, nullable=true)
+   */
+  public $latitude;
+
+  public function __toString()
+  {
+    return $this-&gt;longitude &amp;&amp; $this-&gt;latitude ? $this-&gt;latitude.','.$this-&gt;longitude : '';
+  }
+}
+					</code></pre>
+				</section>
+				<section>
+					<pre class="small-code"><code class="php" data-trim>
+/**
+ * @ORM\Entity
+ */
+class BlogPost
+{
+  // ...
+
+  /**
+   * @ORM\Embedded(class=&quot;GeoPoint&quot;)
+   */
+  public $geoPoint;
+
+  public function __construct()
+  {
+    $this-&gt;geoPoint = new GeoPoint();
+  }
+
+  // Getters and setters
+}
+					</code></pre>
+				</section>
+				<section>
+					<pre class="small-code"><code class="yaml" data-trim>
+fos_elastica:
+    indexes:
+        app:
+            types:
+                blog_post:
+                    mappings:
+                        caption: ~
+                        content: ~
+                        geo_point:
+                            type: geo_point
+                    </code></pre>
+					<aside class="notes">
+						<ul>
+							<li>Currently just stored as string</li>
+							<li>Easiest to pass string to Elastica. Problems with objects and arrays</li>
+							<li>Going to get a lot better with Elasticsearch 2.2</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<p>Add some records...</p>
+				</section>
+				<section>
+					<h2>Another debugging tool</h2>
+					<pre><code class="bash" data-trim>
+$ curl http://192.168.33.111:9200/app/blog_post/4?pretty
+{
+  "_index" : "app",
+  "_type" : "blog_post",
+  "_id" : "4",
+  "_version" : 1,
+  "found" : true,
+  "_source" : {
+    "caption" : "Symfony Meetup",
+    "content" : "The February meetup of #Symfonyuk takes places on Feb 16.",
+    "geo_point" : "-0.0873233,51.5132852"
+  }
+}
+					</code></pre>
+				</section>
+				<section>
+					<p>...and we're good to search</p>
+				</section>
+				<section>
+					<pre class="small-code"><code class="php" data-trim>
+$finder = $this->container->get('fos_elastica.finder.app.blog_post');
+
+$boolQuery = new \Elastica\Query\BoolQuery();
+
+// (field, [top_left, bottom_right])
+$geoQuery = new \Elastica\Query\GeoBoundingBox('geo_point', [
+  '51.517577,-0.090372',
+  '51.509047,-0.079461',
+]);
+$boolQuery->addMust($geoQuery);
+
+$results = $finder->find($boolQuery);
+
+return new JsonResponse($results);
+        			</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>Dot notation: blog_post.geo_point</li>
+							<li>Careful again with order (GeoJSON)</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<pre class="small-code"><code class="json" data-trim>
+{
+  "query": {
+    "bool": {
+      "must": [{
+        "geo_bounding_box": {
+          "geo_point": {
+            "top_left": "51.517577,-0.090372",
+            "bottom_right": "51.509047,-0.079461"
+          }
+        }
+      }]
+    }
+  }
+}
+					</code></pre>
+				</section>
+				<section>
+					<pre class="small-code"><code class="json" data-trim>
+{
+  "took" : 304,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 1.0,
+    "hits" : [ {
+      "_index" : "app",
+      "_type" : "blog_post",
+      "_id" : "4",
+      "_score" : 1.0,
+      "_source" : {
+        "caption" : "Symfony Meetup",
+        "content" : "The February meetup of #Symfonyuk takes places on Feb 16.",
+        "geo_point" : "51.5132852,-0.0873233"
+      }
+    } ]
+  }
+}
+					</code></pre>
 				</section>
 				<section>
 					<img src="images/airbnb.gif" class="plain">
