@@ -15,7 +15,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
 
 		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+		<link rel="stylesheet" href="css/theme/jonny.css" id="theme">
 
 		<link rel="stylesheet" href="lib/css/zenburn.css">
 
@@ -35,15 +35,513 @@
 	<body>
 
 		<div class="reveal">
-			<div style="position: absolute; top: 1em; left: 1em; text-align: left; font-size: 0.5em; z-index: 1">
+			<header class="header header-left">
                 Symfony &amp; Elasticsearch - Jonny Schmid
-            </div>
-            <div style="position: absolute; top: 1em; right: 1em; text-align: right; font-size: 0.5em; z-index: 1">
-                <a href="https://twitter.com/jschmid_no1" target="_blank" style="color: #fff">@jschmid_no1</a>
-            </div>
+            </header>
+            <header class="header header-right">
+                <a href="https://twitter.com/jschmid_no1" target="_blank" style="color: inherit">@jschmid_no1</a>
+            </header>
 			<div class="slides">
 				<section>
+					<img src="images/symfony.png" alt="Symfony" class="plain">
+					<img src="images/elastic.png" alt="Elastic" class="plain">
 					<h1>Symfony &amp; Elasticsearch</h1>
+				</section>
+				<section>
+					<h1>@jschmid_no1</h1>
+				</section>
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li class="fragment">Dependencies</li>
+						<li class="fragment">Set up a dev environment in 15 mins</li>
+						<li class="fragment">Debug tools</li>
+						<li class="fragment">Simple queries</li>
+						<li class="fragment">Geo bounding box query</li>
+						<li class="fragment">Search alerts</li>
+					</ul>
+					<aside class="notes">
+						<ul>
+							<li>Dependencies: Where they're at in terms of their development</li>
+							<li>Simple queries: Search all, filters, boost</li>
+							<li>Search alerts: Spam / NSFW</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>About Elasticsearch</h2>
+					<ul>
+						<li class="fragment">Search server written in Java</li>
+						<li class="fragment">Based on Lucene &ndash; information retrieval library</li>
+						<li class="fragment">JSON documents and RESTful API</li>
+						<li class="fragment">Very popular. Amongst others: <a href="http://www.infoq.com/presentations/uber-stream-processing" target="_blank">Uber</a>, <a href="https://www.elastic.co/videos/netflix-using-elasticsearch" target="_blank">Netflix</a></li>
+					</ul>
+					<aside class="notes">
+						But also: stackoverflow, Soundcloud, Wikimedia and eBay
+					</aside>
+				</section>
+				<section>
+					<h2>Some Cool Features</h2>
+					<ul>
+						<li>Stemming</li>
+						<li>Fuzzy search</li>
+						<li>Autocomplete</li>
+						<li>Search alerts</li>
+						<li>“More like this” queries</li>
+						<li>Geo distance / bounding box</li>
+					</ul>
+					<aside class="notes">
+						<ul>
+							<li>Fuzzy search: Factor in typos</li>
+							<li>Alert: Spam detection or flat hunting</li>
+							<li>Bounding box: Results plotted on map</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<img src="images/github-issues.png" alt="Elasticsearch: Github issues" class="plain">
+				</section>
+				<section>
+					<p>
+						Within 1 week<br />
+						<img src="images/github-issues-closed.png" alt="Elasticsearch: Github issues closed" class="plain">
+					</p>
+				</section>
+				<section>
+					<p>
+						Within 1 week<br />
+						<img src="images/github-commits.png" alt="Elasticsearch: Github commits" class="plain">
+					</p>
+					<aside class="notes">
+						<ul>
+							<li>65k source lines of code changed</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>elastic.co/guide</h2>
+					<img src="images/outdated-docs.png" alt="Outdated docs" class="plain">
+					<aside class="notes">
+						<ul>
+							<li>Lag behind</li>
+							<li>Hard for dependent projects to keep up</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h1>PHP Clients</h1>
+					<aside class="notes">
+						<ul>
+							<li>Programmatic interfaces</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>elasticsearch-php</h2>
+					<ul>
+						<li class="fragment">Official library (since 2013)</li>
+						<li class="fragment">Maps all queries to simple <strong>array structure</strong></li>
+					</ul>
+					<aside class="notes">
+						<ul>
+							<li>Paid developers, faster development</li>
+							<li>Hardly any documentation necessary</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>Elastica</h2>
+					<ul>
+						<li class="fragment">First developed in 2010</li>
+						<li class="fragment">Maps queries to <strong>objects</strong></li>
+					</ul>
+					<aside class="notes">
+						<ul>
+							<li>Autocompletion</li>
+							<li>Easier to read?</li>
+							<li>No paid developers, slower development</li>
+							<li>Poor documentation</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>FOSElasticaBundle</h2>
+					<ul>
+						<li class="fragment">Elastica for Symfony</li>
+						<li class="fragment">Listeners for <strong>Doctrine events</strong> for automatic indexing</li>
+						<li class="fragment">Automatically generates mappings using a <strong>serializer</strong></li>
+					</ul>
+					<aside class="notes">
+						<ul>
+							<li>Sylius also uses FOSElasticaBundle</li>
+							<li>Only sophisticated, stable bundle</li>
+							<li>ElasticsearchBundle using elasticsearch-php</li>
+							<li>Approaching stable</li>
+							<li>No auto-indexing, no profiler integration</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<table>
+						<thead>
+							<tr>
+								<th>Elasticsearch</th>
+								<th>Elastica</th>
+								<th>FOSElasticaBundle</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>2.2.0</td>
+								<td>&ndash;</td>
+								<td>&ndash;</td>
+							</tr>
+							<tr>
+								<td>2.1.1</td>
+								<td>3.1.0</td>
+								<td>&ndash;</td>
+							</tr>
+							<tr>
+								<td>1.5.2</td>
+								<td>2.1.0</td>
+								<td>3.1.8</td>
+							</tr>
+						</tbody>
+					</table>
+				</section>
+				<section>
+					<p>Elasticsearch 2.x: Lots of improvements</p>
+				</section>
+				<section>
+					<img src="images/foselasticabundle-bc.png" alt="FOSElasticaBundle BC" class="plain">
+				</section>
+				<section>
+					<img src="images/dependencies.jpg" alt="Fuck it, we'll install the dependencies locally" class="plain">
+					<aside class="notes">
+						<ul>
+							<li>Try new features</li>
+							<li>Get used to new way of writing queries</li>
+							<li>Elastica got a lot simpler, too!</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h3>composer.json</h3>
+					<pre class="small-code"><code class="json" data-trim>
+{
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/foaly-nr1/FOSElasticaBundle.git"
+    }
+  ],
+  "require": {
+    "friendsofsymfony/elastica-bundle": "dev-patch-elastica-3.1.0 as 4.0@dev"
+  }
+}
+					</code></pre>
+					<pre><code class="bash" data-trim>
+$ composer update
+					</code></pre>
+				</section>
+				<section>
+					<h2>This Talk</h2>
+					<ul>
+						<li class="fragment done">Dependencies</li>
+						<li class="fragment">Set up a dev environment in 15 mins</li>
+					</ul>
+				</section>
+				<section>
+					<h1>Let's get started</h1>
+				</section>
+				<section>
+					<h2>Vagrant/Docker: Elasticsearch 2.1</h2>
+					<pre><code class="ruby" data-trim>
+Vagrant.configure(2) do |config|
+  config.vm.define "elasticsearch" do |v|
+
+    v.vm.box = "ubuntu/trusty64"
+
+    v.vm.network "private_network", ip: "192.168.33.111"
+    v.vm.network :forwarded_port, guest: 9200, host: 9200
+
+    v.vm.provision "docker" do |d|
+      d.images = ["elasticsearch:2.1"]
+      d.run "elasticsearch", args: "-p '9200:9200'"
+    end
+
+  end
+end
+					</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>+1 for Vagrant:</li>
+							<li>Both containers in same file</li>
+							<li>Fixed IP address, nice for default config</li>
+							<li>Ubuntu Server 14</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>You Know, for Search</h2>
+					<pre><code class="bash" data-trim>
+$ vagrant up
+$ curl 192.168.33.111:9200
+{
+  "name" : "Desmond Pitt",
+  "cluster_name" : "elasticsearch",
+  "version" : {
+    "number" : "2.1.1",
+    "build_hash" : "40e2c53a6b6c2972b3d13846e450e66f4375bd71",
+    "build_timestamp" : "2015-12-15T13:05:55Z",
+    "build_snapshot" : false,
+    "lucene_version" : "5.3.1"
+  },
+  "tagline" : "You Know, for Search"
+}
+					</code></pre>
+				</section>
+				<section>
+					<h3>config.yml</h3>
+					<pre><code class="yaml" data-trim>
+fos_elastica:
+    clients:
+        default: { host: 192.168.33.111, port: 9200 }
+        		</code></pre>
+				</section>
+				<section>
+					<pre class="small-code"><code class="php" data-trim>
+/* @ORM\Entity */
+class BlogPost
+{
+    /**
+     * @ORM\Id
+     * @ORM\Column(type=&quot;integer&quot;)
+     * @ORM\GeneratedValue(strategy=&quot;AUTO&quot;)
+     */
+    protected $id;
+
+    /**
+     * @ORM\Column(type=&quot;string&quot;, length=250)
+     */
+    public $caption;
+
+    /**
+     * @ORM\Column(type=&quot;text&quot;)
+     */
+    public $content;
+
+    // Getters and setters
+}
+					</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>I don't encourage use of public properties</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<h2>Manual config</h2>
+					<h3>config.yml</h3>
+					<pre class="small-code"><code class="yaml" data-trim>
+fos_elastica:
+    indexes:
+        app:
+            types:
+                blog_post:
+                    mappings:
+                        caption: ~
+                        content: ~
+
+                    persistence:
+                        driver: orm
+                        model: AppBundle\Entity\BlogPost
+                        provider: ~
+                        listener: ~
+                        finder: ~
+                    </code></pre>
+				</section>
+				<section>
+					<h2>Manual config</h2>
+					<h3>config.yml</h3>
+					<pre class="small-code"><code class="yaml" data-trim>
+fos_elastica:
+    indexes:
+        app:
+            types:
+                blog_post:
+                    mappings:
+                        caption: ~
+                        content: ~
+
+                    persistence: &amp;ELASTICAORM
+                        driver: orm
+                        model: AppBundle\Entity\BlogPost
+                        provider: ~
+                        listener: ~
+                        finder: ~
+                    </code></pre>
+                    <aside class="notes">
+                    	<ul>
+                    		<li>Node Anchor</li>
+                    	</ul>
+                    </aside>
+				</section>
+				<section>
+					<h2>JMSSerializer</h2>
+					<h3>Entity.BlogPost.yml</h3>
+					<pre class="small-code"><code class="yaml" data-trim>
+AppBundle\Entity\BlogPost:
+    exclusion_policy: ALL
+    properties:
+        caption:
+            expose: true
+            groups: [ 'elastica' ]
+        content:
+            expose: true
+            groups: [ 'elastica' ]
+            		</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>If working on an API, serializer used anyway</li>
+							<li>Symfony 2.7 serializer component</li>
+							<li>Dependency can be dropped</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<pre class="small-code"><code class="bash" data-trim>
+$ php app/console doctrine:schema:update -f
+$ php app/console fos:elastica:populate
+$ curl 192.168.33.111:9200/app?pretty
+{
+  "app" : {
+    "aliases" : { },
+    "mappings" : {
+      "blog_post" : {
+        "_meta" : {
+          "model" : "AppBundle\\Entity\\BlogPost"
+        },
+        "properties" : {
+          "caption" : {
+            "type" : "string"
+          },
+          "content" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
+    "settings" : {
+      "index" : {
+        "creation_date" : "1455619375723",
+        "number_of_shards" : "5",
+        "number_of_replicas" : "1",
+        "uuid" : "xSt_rtJuRx2WWL65bQ0uTw",
+        "version" : {
+          "created" : "2020099"
+        }
+      }
+    },
+    "warmers" : { }
+  }
+}
+
+					</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>?pretty query string</li>
+							<li>Default settings</li>
+							<li>Type string</li>
+							<li>Sharding / replica settings</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<p>Add some records...</p>
+				</section>
+				<section>
+					<p>And we're ready for our first search</p>
+				</section>
+				<section>
+					<pre class="small-code"><code class="php" data-trim>
+$finder = $this->container->get('fos_elastica.finder.app.blog_post');
+$results = $finder->find('Symfony');
+
+return new JsonResponse($results);
+					</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>Will serialize our public properties</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<img src="images/profiler-headers.png" class="plain">
+					<aside class="notes">
+						<ul>
+							<li>Configure Monolog to display browser console messages</li>
+							<li>Channel elastica</li>
+						</ul>
+					</aside>
+				</section>
+				<section>
+					<img src="images/profiler-01.png" height="500" class="plain">
+				</section>
+				<section>
+					<h2>Chrome Logger</h2>
+					<h3>config_dev.yml</h3>
+					<pre><code class="yaml" data-trim>
+monolog:
+    handlers:
+        chromephp:
+            type: chromephp
+            level: info
+            channels: [elastica]
+            		</code></pre>
+            	</section>
+            	<section>
+            		<img src="images/chrome-logger.png" class="plain">
+            	</section>
+				<section>
+					<pre><code class="bash" data-trim>
+curl -XGET 'http://192.168.33.111:9200/app/blog_post/_search' -d '
+	{
+		"query": {
+			"query_string": {
+				"query": "Symfony"
+			}
+		}
+	}
+'
+					</code></pre>
+					<aside class="notes">
+						<ul>
+							<li>Elasticsearch provides a full Query DSL based on JSON to define queries</li>
+							<li>Tests on CLI</li>
+						</ul>
+					</aside>
+				</section>
+
+				<section>
+					<h2>Deprecated in Elastica 3.x</h2>
+					<ul>
+						<li class="fragment">Elastica\Query\Filtered</li>
+						<li class="fragment">Elastica\Filter*</li>
+					</ul>
+					<aside class="notes">
+						<ul>
+							<li>You had queries that could match and score</li>
+							<li>And filters that could only match and were cacheable</li>
+							<li>Deprecated the filtered query in favour of a new filter clause on the bool query</li>
+						</ul>
+					</aside>
+				</section>
+
+				<section>
+					<ul>
+						<li><a href="https://qbox.io/blog/author/sloan-ahrens" target="_blank">Sloan Ahrens</a></li>
+					</ul>
 				</section>
 				<section>
 					<h1>@jschmid_no1</h1>
@@ -65,13 +563,11 @@
 				history: true,
 				center: true,
 
-				transition: 'slide',
+				transition: 'none',
 
 				// Optional reveal.js plugins
 				dependencies: [
 					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
-					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
 					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
 					{ src: 'plugin/zoom-js/zoom.js', async: true },
 					{ src: 'plugin/notes/notes.js', async: true }
